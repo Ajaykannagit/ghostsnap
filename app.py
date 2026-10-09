@@ -59,6 +59,8 @@ def init_session():
         st.session_state.darker_twist = None
     if "active_image_bytes" not in st.session_state:
         st.session_state.active_image_bytes = None
+    if "user_note" not in st.session_state:
+        st.session_state.user_note = ""
     if "whatsapp_summary" not in st.session_state:
         st.session_state.whatsapp_summary = None
     if "error_message" not in st.session_state:
@@ -73,6 +75,7 @@ def reset_session():
     st.session_state.alternate_ending = None
     st.session_state.darker_twist = None
     st.session_state.active_image_bytes = None
+    st.session_state.user_note = ""
     st.session_state.whatsapp_summary = None
     st.session_state.error_message = None
     st.rerun()
@@ -187,6 +190,13 @@ if st.session_state.story is None:
                 st.image(file_bytes, caption="Uploaded Investigation Photo", width="stretch")
             with col_img2:
                 st.success("✅ Image loaded and validated!")
+                
+                user_note_input = st.text_area(
+                    "📝 Add your message / context (optional)",
+                    placeholder="e.g. Taken at 3 AM in my old grandmother's attic... felt a cold breeze behind the wardrobe.",
+                    help="Give GhostSnap additional context, whispers, or observations to incorporate into your horror tale."
+                )
+                
                 st.info("Click below to begin multi-stage visual analysis and horror story generation.")
                 
                 if st.button("👁️ Begin Your Investigation", width="stretch"):
@@ -196,6 +206,7 @@ if st.session_state.story is None:
                         st.rerun()
                     else:
                         st.session_state.active_image_bytes = file_bytes
+                        st.session_state.user_note = user_note_input.strip()
                         
                         try:
                             client = get_genai_client(api_key)
@@ -222,7 +233,7 @@ if st.session_state.story is None:
                         
                         try:
                             # 1. Visual analysis
-                            analysis_data = analyze_image_scene(client, file_bytes)
+                            analysis_data = analyze_image_scene(client, file_bytes, user_note=st.session_state.user_note)
                             st.session_state.analysis = analysis_data
                             
                             # 2. Folklore matching
@@ -240,7 +251,8 @@ if st.session_state.story is None:
                                 analysis_data,
                                 style=story_style,
                                 intensity=intensity_clean,
-                                folklore_data=folklore_match
+                                folklore_data=folklore_match,
+                                user_note=st.session_state.user_note
                             )
                             st.session_state.story = story_data
                             scan_placeholder.empty()
@@ -282,6 +294,8 @@ else:
         st.caption(f"🎭 **Style:** {story_style}")
         st.caption(f"⚡ **Intensity:** {horror_intensity}")
         st.caption(f"🌏 **Folklore Focus:** {folklore_region}")
+        if st.session_state.user_note:
+            st.caption(f"📝 **Investigator Note:** *\"{st.session_state.user_note}\"*")
         st.markdown("</div>", unsafe_allow_html=True)
         
         # Section 1: WHAT THE AI SEES

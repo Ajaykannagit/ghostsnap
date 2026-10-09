@@ -16,6 +16,7 @@ import google.generativeai as genai_sdk
 
 from prompts import (
     VISUAL_ANALYSIS_PROMPT,
+    VISUAL_ANALYSIS_PROMPT_TEMPLATE,
     STORY_GENERATION_PROMPT_TEMPLATE,
     CHAPTER_TWO_PROMPT_TEMPLATE,
     ALTERNATE_ENDING_PROMPT_TEMPLATE,
@@ -157,10 +158,14 @@ def call_gemini_text(client, prompt: str) -> str:
     raise RuntimeError(f"Failed to generate text content after retries: {last_error}")
 
 
-def analyze_image_scene(client, image_input) -> dict:
-    """Stateless Step 2: Analyzes image visual elements."""
+def analyze_image_scene(client, image_input, user_note: str = "") -> dict:
+    """Stateless Step 2: Analyzes image visual elements with optional user notes."""
     image = prepare_image(image_input)
-    raw_response = call_gemini_vision(client, image, VISUAL_ANALYSIS_PROMPT)
+    if user_note and user_note.strip():
+        prompt = VISUAL_ANALYSIS_PROMPT_TEMPLATE.format(user_note=user_note.strip())
+    else:
+        prompt = VISUAL_ANALYSIS_PROMPT
+    raw_response = call_gemini_vision(client, image, prompt)
     cleaned = clean_json_response(raw_response)
     
     try:
@@ -179,14 +184,17 @@ def analyze_image_scene(client, image_input) -> dict:
     return data
 
 
-def generate_horror_story(client, analysis_data: dict, style: str, intensity: str, folklore_data: dict = None) -> dict:
-    """Stateless Step 3: Generates personalized horror story based on image analysis."""
+def generate_horror_story(client, analysis_data: dict, style: str, intensity: str, folklore_data: dict = None, user_note: str = "") -> dict:
+    """Stateless Step 3: Generates personalized horror story based on image analysis and user context."""
     folklore_ctx = "None"
     if folklore_data:
         folklore_ctx = f"{folklore_data.get('name', '')} ({folklore_data.get('region', '')}): {folklore_data.get('traditional_belief', '')}"
     
+    note_ctx = user_note.strip() if (user_note and user_note.strip()) else "None provided."
+    
     prompt = STORY_GENERATION_PROMPT_TEMPLATE.format(
         analysis_json=json.dumps(analysis_data, indent=2),
+        user_note=note_ctx,
         style=style,
         intensity=intensity,
         folklore_context=folklore_ctx

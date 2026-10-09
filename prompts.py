@@ -3,9 +3,12 @@ GhostSnap - AI Prompt Engineering Module
 Provides structured prompts for Image Visual Analysis, Story Generation, Folklore Context, and WhatsApp Summaries.
 """
 
-VISUAL_ANALYSIS_PROMPT = """
+VISUAL_ANALYSIS_PROMPT_TEMPLATE = """
 You are an expert visual analyst and paranormal folklore researcher for GhostSnap.
 Analyze the provided image objectively and thoroughly. Focus on atmospheric, structural, lighting, and textural details.
+
+USER'S NOTE / SCENE CONTEXT:
+{user_note}
 
 IMPORTANT SAFETY & TRUTH MANDATE:
 - Do NOT state or claim that ghosts, spirits, or supernatural entities exist in the image.
@@ -13,23 +16,28 @@ IMPORTANT SAFETY & TRUTH MANDATE:
 - Output MUST be valid JSON format only, with no markdown code blocks outside JSON.
 
 Return a JSON object with the following exact keys:
-{
+{{
   "neutral_description": "A clear, objective description of the overall scene (environment, room type, lighting, time of day appearance).",
   "important_objects": ["List", "of", "key", "visible", "objects", "structures"],
   "interesting_details": ["List", "of", "subtle", "or", "intriguing", "visual", "elements", "such as shadows, dark corners, textures, reflections, window angles"],
   "ordinary_explanations": ["Plausible", "scientific", "or", "natural", "explanations", "for", "any", "ambiguous", "shapes", "or", "dark", "areas"],
   "horror_themes": ["3 to 4 horror storytelling themes inspired by the visual elements, e.g. Whispering Corridor, The Forgotten Mirror, Shadow in the Window"],
   "safety_note": "Visual observation completed. No supernatural entity detected."
-}
+}}
 """
+
+VISUAL_ANALYSIS_PROMPT = VISUAL_ANALYSIS_PROMPT_TEMPLATE.format(user_note="None provided.")
 
 
 STORY_GENERATION_PROMPT_TEMPLATE = """
 You are a master horror author and atmospheric storyteller for GhostSnap.
-Your task is to write an original, deeply immersive horror story inspired strictly by the visual details observed in the uploaded image.
+Your task is to write an original, deeply immersive horror story inspired strictly by the visual details observed in the uploaded image and any context or message provided by the investigator.
 
 SCENE ANALYSIS DETAILS FROM IMAGE:
 {analysis_json}
+
+INVESTIGATOR'S MESSAGE / CONTEXT:
+{user_note}
 
 STORY CONFIGURATION:
 - Storytelling Style: {style}
@@ -37,7 +45,7 @@ STORY CONFIGURATION:
 - Optional Folklore Context: {folklore_context}
 
 WRITING REQUIREMENTS:
-1. The story MUST directly reference the specific visual details observed in the photo (e.g. the exact window, staircase, shadow angle, object, or texture).
+1. The story MUST directly reference the specific visual details observed in the photo (e.g. the exact window, staircase, shadow angle, object, or texture) and weave in the investigator's message/context if provided.
 2. The tone must be evocative, suspenseful, and atmospheric.
 3. Keep the narrative fictional and entertaining. Do NOT invent real historical tragedies or present fictional lore as factual historical events.
 4. Output MUST be structured in JSON format with the following exact keys:
