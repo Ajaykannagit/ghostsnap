@@ -37,31 +37,20 @@ def send_whatsapp_story(twilio_account_sid: str, twilio_auth_token: str, twilio_
 
         cleaned_summary = clean_whatsapp_text(summary)
         name_str = user_name or "Investigator"
-        body_text = f"👻 *GhostSnap Horror Teaser for {name_str}*\n\n{cleaned_summary}"
 
-        # Attempt 1: Try Content SID template if provided
-        if twilio_content_sid and twilio_content_sid.strip():
-            try:
-                content_vars = json.dumps(
-                    {"1": name_str, "2": cleaned_summary},
-                    ensure_ascii=False
-                )
-                message = client.messages.create(
-                    from_=clean_from,
-                    to=clean_to,
-                    content_sid=twilio_content_sid.strip(),
-                    content_variables=content_vars
-                )
-                return True, message.sid
-            except Exception as template_err:
-                # If ContentSid failed (e.g. 400 ContentSid Required or Invalid), fallback to body sending
-                pass
+        # Twilio requires a Content Template (ContentSid) for WhatsApp messages
+        if not twilio_content_sid or not twilio_content_sid.strip():
+            return False, "TWILIO_CONTENT_SID is not configured. Please create a Content Template in Twilio Console (Messaging → Content Template Builder) and add the Content SID to your Streamlit secrets."
 
-        # Attempt 2: Direct body messaging
+        content_vars = json.dumps(
+            {"1": name_str, "2": cleaned_summary},
+            ensure_ascii=False
+        )
         message = client.messages.create(
             from_=clean_from,
             to=clean_to,
-            body=body_text
+            content_sid=twilio_content_sid.strip(),
+            content_variables=content_vars
         )
         return True, message.sid
 
